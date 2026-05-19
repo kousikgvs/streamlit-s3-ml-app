@@ -1,0 +1,17 @@
+# AWS
+boto3
+awscli
+
+# Web App
+streamlit
+
+# Machine Learning
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+joblib
+
+# Notebook
+ipykernel
