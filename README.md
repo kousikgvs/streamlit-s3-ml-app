@@ -1,3 +1,6 @@
+<img width="2578" height="1395" alt="image" src="https://github.com/user-attachments/assets/c536ba0f-6d64-4cfb-9e63-576b7ac425f5" />
+<img width="2578" height="387" alt="image" src="https://github.com/user-attachments/assets/525a96d3-72cc-4c5f-891f-c6bb117a01f4" />
+
 ## Getting Started
 
 ### 1. Set Up the Virtual Environment
