@@ -36,3 +36,7 @@ Thumbs.db
 *.joblib
 *.csv
 *.parquet
+
+.pem
+.pem.*
+.pem/
