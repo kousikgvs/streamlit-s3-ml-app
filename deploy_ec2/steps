@@ -1,0 +1,9 @@
+create a key-pair we will get .pem file in my case kousik.pem
+
+we have click on kousik.pem file , more options > properties > Security > advanced > disable inheritance > remove all the elements > add > add our username there. 
+
+we have run cmd as administrator and run the below command , the below command I got it from the the aws portal itself after creating an instance > click on connect button > we will get the below command.
+
+download remote explorer from vscode - enter below command for vs code to connect to the Ec2 machine.
+
+ssh -i "C:\projects\kousik.pem" ec2-user@ec2-18-60-226-132.ap-south-2.compute.amazonaws.com
