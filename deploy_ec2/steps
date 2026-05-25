@@ -20,6 +20,8 @@ Place the .pem file inside the ~/.ssh folder (or its Windows equivalent: C:\User
 
 Every time you stop and start the instance, the public IPv4 / public DNS changes — so you'll need to update the SSH command (and the VS Code host entry) with the new address. To avoid this, attach an Elastic IP to the instance and it will stay the same across restarts.
 
+Note: every time we restart or stop our server, the public IP keeps changing. So we use an Elastic IP to assign a fixed IP address to the instance. If we don't do this, the <PUBLIC_IP>:PORT URL we share (for example, the Streamlit app at http://<PUBLIC_IP>:8501) breaks every time the instance is restarted, because the public IP is reassigned. Allocating an Elastic IP and associating it with the instance pins a static IP to it, so the same <PUBLIC_IP>:PORT keeps working across stop/start cycles.
+
 Select the correct Security Group for the instance — this controls all network traffic in and out.
 
 If the inbound and outbound rules are wrong, the instance simply won't be reachable. At minimum, allow inbound port 22 (SSH) from your IP and any app ports you need (e.g., 8501 for Streamlit, 80/443 for web). Keep outbound open unless you have a specific reason to restrict it.
