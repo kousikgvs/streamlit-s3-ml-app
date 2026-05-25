@@ -27,7 +27,9 @@ SCALER_PATH  = os.path.join(MODELS_DIR, "scaler.pkl")
 
 def load_and_preprocess(csv_path: str):
     df = pd.read_csv(csv_path)
+    # Drop ID column and any stray "Unnamed: N" columns from trailing commas in the CSV
     df.drop(columns=["Loan_ID"], inplace=True)
+    df.drop(columns=[c for c in df.columns if c.startswith("Unnamed:")], inplace=True)
 
     # Fill missing values
     df["Gender"]           = df["Gender"].fillna(df["Gender"].mode()[0])
