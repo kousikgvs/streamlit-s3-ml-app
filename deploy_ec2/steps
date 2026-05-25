@@ -1,9 +1,36 @@
-create a key-pair we will get .pem file in my case kousik.pem
+Create a key-pair in the AWS EC2 console — this gives us a .pem file (in my case, kousik.pem). This file is the private key used to SSH into the instance, so save it somewhere safe and never share it.
 
-we have click on kousik.pem file , more options > properties > Security > advanced > disable inheritance > remove all the elements > add > add our username there. 
+On Windows, the .pem file must have restricted permissions or SSH will refuse to use it. Right-click on kousik.pem > More options > Properties > Security > Advanced > Disable inheritance > Remove all existing entries (Convert / Remove) > Add > add only your current Windows username with Read access. This makes the key readable strictly by you.
 
-we have run cmd as administrator and run the below command , the below command I got it from the the aws portal itself after creating an instance > click on connect button > we will get the below command.
+Run Command Prompt (or PowerShell) as Administrator and use the SSH command shown in the AWS console: go to your instance > click Connect > SSH client tab > copy the exact command. AWS auto-fills the correct user (ec2-user / ubuntu) and the current public DNS for you.
 
-download remote explorer from vscode - enter below command for vs code to connect to the Ec2 machine.
+In VS Code, install the Remote - SSH (Remote Explorer) extension. This lets you connect to the EC2 machine directly from VS Code and edit/run code on the remote server as if it were local. Use the same SSH command below to add the host:
 
-ssh -i "C:\projects\kousik.pem" ec2-user@ec2-18-60-226-132.ap-south-2.compute.amazonaws.com
+ssh -i "C:\projects\kousik.pem" ec2-user@ec2-<public_url>.ap-south-2.compute.amazonaws.com
+
+Attach the correct IAM Role to the instance (EC2 > Actions > Security > Modify IAM role) so the app can talk to S3 and other AWS services without hardcoding credentials inside the instance.
+
+Make sure the .pem file has the right permissions before using it (see the Windows step above; on Linux/macOS run: chmod 400 kousik.pem). SSH will reject keys that are too open.
+
+The SSH connection string must use the default OS user — ec2-user for Amazon Linux, ubuntu for Ubuntu AMIs, etc. Never log in as root; root login is disabled by default for security reasons.
+
+After launching the instance, wait until all status checks pass (3/3 checks in the AWS portal). Trying to SSH before this often fails because the instance isn't fully ready.
+
+Place the .pem file inside the ~/.ssh folder (or its Windows equivalent: C:\Users\<you>\.ssh) so SSH and VS Code can find it easily, and so your SSH config can reference it cleanly.
+
+Every time you stop and start the instance, the public IPv4 / public DNS changes — so you'll need to update the SSH command (and the VS Code host entry) with the new address. To avoid this, attach an Elastic IP to the instance and it will stay the same across restarts.
+
+Select the correct Security Group for the instance — this controls all network traffic in and out.
+
+If the inbound and outbound rules are wrong, the instance simply won't be reachable. At minimum, allow inbound port 22 (SSH) from your IP and any app ports you need (e.g., 8501 for Streamlit, 80/443 for web). Keep outbound open unless you have a specific reason to restrict it.
+
+Always turn off (stop) the instance when you're not using it — otherwise AWS keeps billing you by the hour, even when idle. If you don't need the instance at all anymore, terminate it.
+
+If you pick t3.micro or t3.small, the RAM and CPU are very limited. They fill up quickly, especially when used with VS Code Remote, so the instance gets sluggish or unresponsive and you'll have to reboot it often.
+
+So pick a good AMI (a stable OS like Amazon Linux 2023 or Ubuntu LTS) along with a larger instance type (more RAM and a stronger processor) — this gives enough headroom for almost any use case without constant reboots.
+
+If you are using Linux (Amazon Linux), install these basic tools first before pulling code or setting up environments:
+
+sudo yum install -y git
+sudo yum install -y python3-pip && python3 -m pip --version
