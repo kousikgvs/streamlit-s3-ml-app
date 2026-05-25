@@ -1,9 +1,16 @@
 import boto3
 from botocore.exceptions import ClientError
 import os
+from dotenv import load_dotenv
+
+# ── Load credentials from .env ────────────────────────────────────────────────
+load_dotenv()
+
+AWS_ACCESS_KEY_ID     = os.getenv("access_key")
+AWS_SECRET_ACCESS_KEY = os.getenv("secret_access_key")
 
 # ── Config ────────────────────────────────────────────────────────────────────
-REGION = "us-east-1"
+REGION = "ap-south-2"
 BUCKET_NAME = "loan-dataset-models"
 
 # Folder structure inside the bucket
@@ -15,7 +22,31 @@ S3_FOLDERS = {
 
 
 def _get_client():
-    return boto3.client("s3", region_name=REGION)
+    return boto3.client(
+        "s3",
+        region_name=REGION,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    )
+
+
+def _ensure_bucket():
+    """Create the bucket if it doesn't exist (in REGION)."""
+    client = _get_client()
+    try:
+        client.head_bucket(Bucket=BUCKET_NAME)
+    except ClientError:
+        try:
+            if REGION == "us-east-1":
+                client.create_bucket(Bucket=BUCKET_NAME)
+            else:
+                client.create_bucket(
+                    Bucket=BUCKET_NAME,
+                    CreateBucketConfiguration={"LocationConstraint": REGION},
+                )
+            print(f"Created bucket s3://{BUCKET_NAME} in {REGION}")
+        except ClientError as e:
+            print(f"Bucket check/create failed: {e}")
 
 
 # ── Upload ────────────────────────────────────────────────────────────────────
@@ -34,6 +65,7 @@ def upload_file(local_path: str, s3_folder_key: str, s3_filename: str = None) ->
     filename = s3_filename or os.path.basename(local_path)
     s3_key = folder + filename
 
+    _ensure_bucket()
     client = _get_client()
     try:
         client.upload_file(local_path, BUCKET_NAME, s3_key)
