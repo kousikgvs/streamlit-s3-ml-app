@@ -15,4 +15,4 @@ joblib
 
 # Notebook
 ipykernel
-dotenv
+python-dotenv
