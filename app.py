@@ -9,26 +9,22 @@ MODELS_DIR   = "models"
 MODEL_PATH   = os.path.join(MODELS_DIR, "random_forest_model.pkl")
 SCALER_PATH  = os.path.join(MODELS_DIR, "scaler.pkl")
 
-# ── Auto-download models from S3 if not present locally ──────────────────────
-@st.cache_resource(show_spinner="Checking models...")
+
+def models_present() -> bool:
+    return os.path.isfile(MODEL_PATH) and os.path.isfile(SCALER_PATH)
+
+
+@st.cache_resource(show_spinner="Loading models...")
 def load_models():
-    os.makedirs(MODELS_DIR, exist_ok=True)
-
-    if not os.path.isfile(MODEL_PATH):
-        with st.spinner("Downloading model from S3..."):
-            success = download_file("models", "random_forest_model.pkl")
-        if not success:
-            st.error("❌ Failed to download model from S3.")
-            st.stop()
-
-    if not os.path.isfile(SCALER_PATH):
-        with st.spinner("Downloading scaler from S3..."):
-            success = download_file("models", "scaler.pkl")
-        if not success:
-            st.error("❌ Failed to download scaler from S3.")
-            st.stop()
-
     return joblib.load(MODEL_PATH), joblib.load(SCALER_PATH)
+
+
+def download_models_from_s3() -> bool:
+    """Download both artifacts from S3. Returns True on full success."""
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    ok_model = download_file("models", "random_forest_model.pkl")
+    ok_scaler = download_file("models", "scaler.pkl")
+    return ok_model and ok_scaler
 
 # ── Encoding maps (matches LabelEncoder alphabetical order from training) ─────
 GENDER_MAP        = {"Male": 1, "Female": 0}
@@ -43,8 +39,39 @@ st.set_page_config(page_title="Loan Approval Predictor", page_icon="🏦", layou
 st.title("🏦 Loan Approval Predictor")
 st.markdown("Fill in the applicant details below and click **Predict**.")
 
-# Load (or download) models once at startup
-model, scaler = load_models()
+# ── Model download gate ───────────────────────────────────────────────────────
+# Predict button stays disabled until models are downloaded locally from S3.
+with st.sidebar:
+    st.header("Model artifacts")
+    if models_present():
+        st.success("✅ Models are available locally.")
+        if st.button("🔄 Re-download from S3"):
+            load_models.clear()
+            with st.spinner("Downloading models from S3..."):
+                ok = download_models_from_s3()
+            if ok:
+                st.toast("Models re-downloaded ✅", icon="✅")
+                st.rerun()
+            else:
+                st.error("❌ Failed to download one or more model files from S3.")
+    else:
+        st.warning("⚠️ Models not found locally. Download them before predicting.")
+        if st.button("⬇️ Download models from S3", type="primary"):
+            with st.spinner("Downloading models from S3..."):
+                ok = download_models_from_s3()
+            if ok:
+                st.toast("Models downloaded ✅", icon="✅")
+                st.rerun()
+            else:
+                st.error("❌ Failed to download one or more model files from S3.")
+
+models_ready = models_present()
+
+if not models_ready:
+    st.info("ℹ️ Open the sidebar and click **Download models from S3** to enable prediction.")
+    model, scaler = None, None
+else:
+    model, scaler = load_models()
 
 # ── Input form ────────────────────────────────────────────────────────────────
 with st.form("loan_form"):
@@ -68,7 +95,12 @@ with st.form("loan_form"):
                                            format_func=lambda x: "Has Credit History (1)" if x == 1.0 else "No Credit History (0)",
                                            index=0)
 
-    submitted = st.form_submit_button("🔍 Predict", use_container_width=True)
+    submitted = st.form_submit_button(
+        "🔍 Predict",
+        use_container_width=True,
+        disabled=not models_ready,
+        help=None if models_ready else "Download the models from the sidebar first.",
+    )
 
 # ── Prediction ────────────────────────────────────────────────────────────────
 if submitted:
