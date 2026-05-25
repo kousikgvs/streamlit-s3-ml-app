@@ -1,8 +1,28 @@
+# 🏦 Loan Approval Predictor — Streamlit + AWS
+
 <img width="2840" height="1467" alt="image" src="https://github.com/user-attachments/assets/99a8eb06-4278-484f-8a50-40e328fe6901" />
 <img width="2834" height="1465" alt="image" src="https://github.com/user-attachments/assets/3074ab28-20ce-45e8-9907-3058dc09a897" />
 <img width="2810" height="1476" alt="image" src="https://github.com/user-attachments/assets/e6d5dad6-e96b-46e9-9934-380b1c6f2f23" />
 
-## Getting Started
+A **Streamlit** web app for **loan approval prediction** (binary classification) powered by a **Random Forest** model, with end-to-end AWS integration.
+
+**What it does**
+- Upload or fetch the dataset and trained model from **Amazon S3**.
+- Enter applicant details in the UI and get an instant **Approved / Rejected** prediction with confidence.
+- Models are downloaded on demand via a sidebar button — predictions are blocked until artifacts are present locally.
+
+**AWS stack**
+- **S3** — stores the dataset (`Dataset/`) and trained artifacts (`models/random_forest_model.pkl`, `scaler.pkl`) in the `loan-dataset-models` bucket.
+- **IAM** — dedicated user with scoped permissions (`s3:CreateBucket`, `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`) for secure access; credentials loaded from `.env` via `python-dotenv`.
+- **EC2** — Amazon Linux instance hosts the Streamlit app, pulls the latest model from S3 at runtime, and serves the UI on port 8501.
+
+**ML**
+- Task: **binary classification** (Loan_Status: Approved / Rejected).
+- Algorithm: `RandomForestClassifier` (scikit-learn), with `StandardScaler` on 11 engineered features.
+
+---
+
+
 
 ### 1. Set Up the Virtual Environment
 
